@@ -1,0 +1,107 @@
+To begin, I cloned the gem5 repository and built the simulator for the X86 architecture. This was done with the commands:
+git clone https://gem5.googlesource.com/public/gem5
+Navigated to the GEM5 Directory
+I started by moving into the GEM5 working directory using the command:
+cd ~/gem5
+This ensured I was in the right location to organize and manage the program within GEM5's structure to set Up the Source Folder
+scons -j1 build/X86/gem5.opt
+During the setup, I encountered an issue where `scons` was missing. I fixed this by installing the required packages using:
+sudo apt-get install scons build-essential
+
+To maintain proper organization, I created a folder structure to hold the program's source code:
+mkdir -p tests/test-progs/hello/src
+This created the required directories, including any missing parent folders.
+Created the hello.c File
+I then created a file named hello.c inside the src folder by using:
+nano tests/test-progs/hello/src/hello.c
+This opened the Nano editor, allowing me to write the program.
+Writing and Executing the C Program
+I created a simple Hello World program in C. The file `hello.c` contained:
+#include <stdio.h>
+int main() {
+    printf("Hello, World!\n");
+    return 0;
+}
+After writing the code, I saved the file by pressing Ctrl+O followed by Enter, and then exited Nano with Ctrl+X.
+I compiled the hello.c file into a statically linked binary using the GCC compiler with the following command:
+gcc -static -o tests/test-progs/hello/bin/x86/linux/hello tests/test-progs/hello/src/hello.c and ran it to confirm it worked, producing the expected output:
+ 
+This process involved setting up the necessary directory structure, writing the source code, and compiling it into a format suitable for GEM5, ensuring everything was done systematically and aligned with the project requirements.
+
+Python: Creating and Running the Simulation Script in GEM5
+Here’s a detailed report on the steps I followed to create the simulation script, configure GEM5, and run the simulation:
+Created the Simulation Script and then opened a New Python Script
+I created a Python file named run_hello.py in the configs/example directory using the following command:
+nano configs/example/run_hello.py
+This opened the Nano editor, allowing me to write the script.
+Wrote the Simulation Script:
+from m5.objects import *
+
+# Create the system
+system = System()
+system.clk_domain = SrcClockDomain()
+system.clk_domain.clock = "1GHz"
+system.clk_domain.voltage_domain = VoltageDomain()
+
+# Memory configuration
+system.mem_mode = "timing"
+system.mem_ranges = [AddrRange("512MB")]
+system.mem_ctrl = DDR3_1600_8x8()
+system.mem_ctrl.range = system.mem_ranges[0]
+
+# CPU configuration
+system.cpu = TimingSimpleCPU()
+system.cpu.icache = L1_ICache(size="32kB")
+system.cpu.dcache = L1_DCache(size="32kB")
+
+# Connecting CPU and Memory
+system.membus = SystemXBar()
+system.cpu.icache_port = system.membus.slave
+system.cpu.dcache_port = system.membus.slave
+system.cpu.createInterruptController()
+
+# Setting up workload
+system.workload = SEWorkload.init_compatible("hello")
+system.cpu.workload = system.workload
+system.cpu.createThreads()
+
+# Simulation Configuration
+root = Root(full_system=False, system=system)
+m5.instantiate()
+print("Beginning simulation!")
+exit_event = m5.simulate()
+print("Exiting @ tick {} because {}".format(
+    m5.curTick(), exit_event.getCause()))
+
+Built GEM5 for X86 Architecture
+Since GEM5 must be built for the X86 architecture before running simulations, I ran the following command:
+scons -j1 build/X86/gem5.opt
+This command initiated the build process, which compiled the necessary components for X86. The -j1 flag ensured the build used one thread to manage resource usage effectively.
+I waited for the build process to complete, which took some time depending on system performance.
+Ran the Simulation
+Executed GEM5 with the Simulation Script
+After successfully building GEM5, I ran the simulation script using the following command:
+./build/X86/gem5.opt configs/example/run_hello.py
+This command instructed GEM5 to use the optimized X86 binary (gem5.opt) to execute the run_hello.py script.
+I ran the script with:
+./build/X86/gem5.opt configs/example/run_hello.py
+However, I encountered an `ImportError` because `DDR3_1600_x64` was unavailable. To resolve this, I listed all available memory objects using:
+./build/X86/gem5.opt --list-sim-objects | grep DDR
+I updated the script to use a compatible memory model and retried.
+Resolving HDF5 Library Warnings
+While building gem5, I saw a warning about missing HDF5 libraries. The specific package `libhdf5-cpp-103` was obsolete. I installed the updated packages:
+sudo apt-get install libhdf5-dev libhdf5-mpich-hl-cpp-100t64
+After rebuilding gem5 with:
+scons -j1 build/X86/gem5.opt
+the warning was resolved.
+Final Execution and Outputs
+After troubleshooting, I successfully executed the Python script:
+./build/X86/gem5.opt configs/example/run_hello.py
+The output was:
+ 
+
+Challenges and Resolutions
+Missing Dependencies: I encountered missing packages like `scons` and `libhdf5-cpp-103`. By researching and installing updated replacements, I addressed these issues effectively.
+ImportError for Memory Model: The default memory model `DDR3_1600_x64` was not available. By listing and selecting a compatible model, I updated the script to align with gem5's configuration.
+Command Execution Errors: Initial confusion in script invocation was clarified by referring to gem5 documentation and verifying the command structure.
+ 
