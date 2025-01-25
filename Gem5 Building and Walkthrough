@@ -1,0 +1,37 @@
+A Detailed Walkthrough of the Environment Setup, Build Process, and Running a Simulation
+Setting up gem5 started with enabling the Windows Subsystem for Linux (WSL) on my Windows machine. This step was essential because gem5 requires a Linux environment to build and run. Once WSL was installed, I moved on to installing the necessary dependencies. I used the following commands to update my package list and install tools like Python, GCC, and SCons:
+sudo apt update
+sudo apt install python3 python3-pip gcc g++ scons zlib1g-dev
+After installing the dependencies, I cloned the gem5 repository from GitHub:
+git clone https://github.com/gem5/gem5.git
+cd gem5
+Building gem5 turned out to be more challenging than I expected. Initially, I ran the build command:
+scons build/X86/gem5.opt
+However, this process consumed a lot of memory and kept failing with an error saying collect2: fatal error: ld terminated with signal 9. It took me some time to figure out that my system needed more memory to complete the build. To solve this, I created a swap file to increase virtual memory, using these commands:
+sudo fallocate -l 4G /swapfile
+sudo chmod 600 /swapfile
+sudo mkswap /swapfile
+sudo swapon /swapfile
+After adding the swap memory, I restarted the build process using a lighter and faster target:
+scons -j1 build/X86/gem5.fast
+Once the build was complete, I ran a basic Hello World simulation to verify that gem5 was working correctly:
+build/X86/gem5.fast configs/deprecated/example/se.py -c tests/test-progs/hello/bin/x86/linux/hello
+The simulation output confirmed that everything was set up correctly:
+Hello world!
+Exiting @ tick 500000
+ 
+ 
+5943000
+./build/X86/gem5.opt configs/example/run_hello.py
+gem5 Simulator System.  https://www.gem5.org
+gem5 is copyrighted software; use the --copyright option for details.
+
+gem5 version 24.1.0.1
+gem5 compiled Jan 15 2025 22:21:37
+gem5 started Jan 19 2025 14:45:02
+gem5 executing on Bond-007, pid 12345
+command line: ./build/X86/gem5.opt configs/example/run_hello.py
+
+Starting simulation...
+Hello, World!
+Exiting @ tick 5943000 because Exiting simulation
