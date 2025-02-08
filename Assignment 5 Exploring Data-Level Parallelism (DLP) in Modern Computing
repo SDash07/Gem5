@@ -1,0 +1,72 @@
+-- Simulating a Vector Processing Task
+-- To demonstrate the advantages of vector architectures, we simulate a simple vector addition operation and compare its performance with a scalar implementation. The following Python script showcases the differences in execution time between the two approaches.
+import numpy as np
+import time
+size = 1000000
+A = np.random.rand(size)
+B = np.random.rand(size)
+C = np.zeros(size)
+# Scalar Implementation
+start = time.time()
+for i in range(size):
+    C[i] = A[i] + B[i]
+end = time.time()
+scalar_time = end - start
+print(f"Scalar Execution Time: {scalar_time:.6f} seconds")
+# Vectorized Implementation
+start = time.time()
+C = A + B
+end = time.time()
+vector_time = end - start
+print(f"Vectorized Execution Time: {vector_time:.6f} seconds")
+
+-- Leveraging AVX for SIMD Processing
+-- Advanced Vector Extensions (AVX) provide enhanced SIMD capabilities, enabling efficient parallel computations. AVX instructions process multiple data elements simultaneously, reducing instruction cycles and improving overall performance. The following example demonstrates SIMD-based vector addition using AVX in C.
+#include <immintrin.h>
+#include <stdio.h>
+int main() {
+       float A[8] = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0};
+       float B[8] = {8.0, 7.0, 6.0, 5.0, 4.0, 3.0, 2.0, 1.0};
+float C[8];    
+    __m256 a = _mm256_loadu_ps(A);
+    __m256 b = _mm256_loadu_ps(B);
+  __m256 c = _mm256_add_ps(a, b);    
+    _mm256_storeu_ps(C, c);
+    for (int i = 0; i < 8; i++) {
+        printf("%f ", C[i]);
+   }
+   return 0;
+}
+
+-- GPUs and DLP
+__global__ void matrixMul(float *A, float *B, float *C, int N) {
+    int row = blockIdx.y * blockDim.y + threadIdx.y;
+    int col = blockIdx.x * blockDim.x + threadIdx.x;
+   float sum = 0;
+    for (int k = 0; k < N; k++) {
+       sum += A[row * N + k] * B[k * N + col];
+    }
+    C[row * N + col] = sum;
+}
+
+-- Implementation of Loop-Level Parallelism
+The following C program demonstrates loop parallelization using OpenMP:
+#include <omp.h>
+#include <stdio.h>
+#define N 1000000
+int main() {
+int A[N], B[N], C[N];    
+    // Initialize arrays
+    for (int i = 0; i < N; i++) {
+        A[i] = i;
+        B[i] = i * 2;
+}    
+     // Parallel loop execution using OpenMP
+    #pragma omp parallel for
+  for (int i = 0; i < N; i++) {
+        C[i] = A[i] + B[i];
+}    
+  printf("Parallel computation completed.\n");
+   return 0;
+}
+
